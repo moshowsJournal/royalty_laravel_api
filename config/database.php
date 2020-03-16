@@ -1,6 +1,5 @@
 <?php
-$DATABASE_URL=parse_url('postgres://vrgdveygridmfz:f3f0a68c318f236099d263dee5a430703bb0debf1eea7a7fc0eb9e5b6f761083@ec2-54-197-48-79.compute-1.amazonaws.com:5432/ddfeet2dsldg3h
-');
+$DATABASE_URL=parse_url('postgres://vrgdveygridmfz:f3f0a68c318f236099d263dee5a430703bb0debf1eea7a7fc0eb9e5b6f761083@ec2-54-197-48-79.compute-1.amazonaws.com:5432/ddfeet2dsldg3h');
 return [
 
     /*
@@ -62,16 +61,15 @@ return [
 
         'pgsql' => [
             'driver' => 'pgsql',
-            'host' => $DATABASE_URL['host'],
-            'port' => $DATABASE_URL['port'],
-            'database' => ltrim($DATABASE_URL['path'],'/'),
-            'username' => $DATABASE_URL['user'],
-            'password' => $DATABASE_URL['pass'],
+            'host' => $DATABASE_URL["host"],
+            'port' => $DATABASE_URL["port"],
+            'database' => ltrim($DATABASE_URL["path"], "/"),
+            'username' => $DATABASE_URL["user"],
+            'password' => $DATABASE_URL["pass"],
             'charset' => 'utf8',
             'prefix' => '',
-            'prefix_indexes' => true,
             'schema' => 'public',
-            'sslmode' => 'prefer',
+            'sslmode' => 'require',
         ],
 
         'sqlsrv' => [
