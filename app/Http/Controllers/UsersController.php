@@ -65,7 +65,7 @@ class UsersController extends Controller
             return response()->json(compact('response'));
         }
         $user = User::where('email','=',$request->email)->first();
-        if($user && $user->verified === false){
+        if($user && $user->verified === 0){
             $data['full_name'] = $user['full_name'];
             $data['email_address'] = $user['email'];
             $data['verification_code'] = $user->verification_code = rand(100000, 999999);
