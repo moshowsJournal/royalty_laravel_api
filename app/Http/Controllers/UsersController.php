@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Validator;
 use App\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use App\Personalchat;
+use App\Groupchat;
 class UsersController extends Controller
 {
     //
@@ -195,6 +197,101 @@ class UsersController extends Controller
             'code' => 200,
             'message' => 'Success! Valid PIN',
             'user' => $user
+        );
+        return response()->json(compact('response'));
+    }
+
+    public function get_personal_chats(Request $request){
+        $validator = Validator::make($request->all(),[
+            'friend_id' => 'required'  
+        ]);
+        if($validator->fails()){
+            $response = array(
+                'errors' => $validator->errors(),
+                'code' => 401
+            );
+            return response()->json(compact('response'));
+        }
+        $messages = Personalchat::where([
+            'sender_id'=> $request->friend_id,
+            'receiver_id'=> $request->friend_id
+        ])->orWhere([
+            'receiver_id'=>$request->friend_id,
+            'sender_id'=>$request->friend_id
+        ])->with('receiver','sender')->get();
+        $response = array(
+            'code' => 200,
+            'messages' => $messages
+        );
+        return response()->json(compact('response'));
+    }
+
+    public function save_personal_chats(Request $request){
+        $validator = Validator::make($request->all(),[
+            'receiver_id' => 'required',
+            'message' => 'required'
+        ]);
+        if($validator->fails()){
+            $response = array(
+                'code' => 401,
+                'errors' => $validator->errors()
+            );
+            return response()->json(compact('response'));
+        }
+        $receiverExists = User::where('id','=',$request->receiver_id)->first();
+        if($receiverExists === null){
+            $response = array(
+                'code' => 404,
+                'message' => 'Receiver not found'
+            );
+            return response()->json(compact('response'));
+        }
+        $request['sender_id'] = Auth::user()->id;
+        if(!Personalchat::create($request->all())){
+            $response = array(
+                'code' => 500,
+                'message' => 'Opps! Message was not saved'
+            );
+            return response()->json(compact('response'));
+        }
+        $response = array(
+            'code' => 200,
+            'message' => 'Success! Message has been saved.'
+        );
+        return response()->json(compact('response'));
+    }
+
+    public function get_group_chats(){
+        $chats = Groupchat::with('sender');
+        $response = array(
+            'code' => 200,
+            'chats' => $chats
+        );
+        return response()->json(compact('response'));
+    }
+
+    public function save_group_chat(Request $request){
+        $validator = Validator::make($request->all(),[
+            'message' => 'required' 
+        ]);
+        if($validator->fails()){
+            $response = array(
+                'code' => 401,
+                'errors' => $validator->errors()
+            );
+            return response()->json(compact('response'));
+        }
+        $request['user_id'] = Auth::user()->id;
+        if(!Groupchat::create($request->all())){
+            $response = array(
+                'code' => 500,
+                'message' => 'Opps! Message was not saved. Please retry'
+            );
+            return response()->json(compact('response'));
+        }
+        $response = array(
+            'code' => 200,
+            'message' => 'Success! Message has been saved.'
         );
         return response()->json(compact('response'));
     }
