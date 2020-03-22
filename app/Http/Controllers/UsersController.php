@@ -9,7 +9,10 @@ use App\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Personalchat;
+use App\GroupMember;
+use App\ChurchGroup;
 use App\Groupchat;
+use App\FriendList;
 class UsersController extends Controller
 {
     //
@@ -89,11 +92,23 @@ class UsersController extends Controller
             return response()->json(compact('response'));
         }
         $user = User::find(Auth::user()->id);
+        $user->is_online = 1;
         $user->api_token = $token = Str::random(60);
         $user->save(); 
         $response = array(
             'code' => 200,
             'user' => $user
+        );
+        return response()->json(compact('response'));
+    }
+
+    public function logout(){
+        $user = User::find(Auth::user()->id);
+        $user->is_online = 0;
+        $user->save(); 
+        $response = array(
+            'code' => 200,
+            'message' => 'Sucess! User has been logged out'
         );
         return response()->json(compact('response'));
     }
@@ -213,10 +228,10 @@ class UsersController extends Controller
             return response()->json(compact('response'));
         }
         $messages = Personalchat::where([
-            'sender_id'=> $request->friend_id,
+            'sender_id'=> Auth::user()->id,
             'receiver_id'=> $request->friend_id
         ])->orWhere([
-            'receiver_id'=>$request->friend_id,
+            'receiver_id'=> Auth::user()->id,
             'sender_id'=>$request->friend_id
         ])->with('receiver','sender')->get();
         $response = array(
@@ -237,6 +252,21 @@ class UsersController extends Controller
                 'errors' => $validator->errors()
             );
             return response()->json(compact('response'));
+        }
+        $friendList = FriendList::where([
+            'friend_id' => $request->receiver_id,
+            'friend_type' => 'member',
+            'user_id' => Auth::user()->id
+        ])->orWhere([
+            'friend_id' => Auth::user()->id,
+            'user_id' => $request->receiver_id,
+            'friend_type' => 'member'
+        ])->first();
+        if($friendList === null){
+            $friend['friend_id'] = $request->receiver_id;
+            $friend['friend_type'] = 'member';
+            $friend['user_id'] = Auth::user()->id;
+            FriendList::create($friend);
         }
         $receiverExists = User::where('id','=',$request->receiver_id)->first();
         if($receiverExists === null){
@@ -261,45 +291,9 @@ class UsersController extends Controller
         return response()->json(compact('response'));
     }
 
-    public function get_profile_photo(Request $request){
+    public function get_group_chats(Request $request){
         $validator = Validator::make($request->all(),[
-            'user_id' => 'required'
-        ]);
-        if($validator->fails()){
-            $response = array(
-                'code' => 'error',
-                'errors' => $validator->errors() 
-            );
-            return response()->json(compact('response'));
-        }
-        $user = User::where('id','=',$request->user_id)->first();
-        if(!$user){
-            $response = array(
-                'code' => 404,
-                'message' => 'User not found'
-            );
-            return response()->json(compact('response'));
-        }
-        $response = array(
-            'code' => 200,
-            'user' => $user,
-            'message' => 'Success! User found.'
-        );
-        return response()->json(compact('response'));
-    }
-
-    public function get_group_chats(){
-        $chats = Groupchat::where()with('sender');
-        $response = array(
-            'code' => 200,
-            'chats' => $chats
-        );
-        return response()->json(compact('response'));
-    }
-
-    public function save_group_chat(Request $request){
-        $validator = Validator::make($request->all(),[
-            'message' => 'required' 
+            'group_id' => 'required'
         ]);
         if($validator->fails()){
             $response = array(
@@ -307,6 +301,156 @@ class UsersController extends Controller
                 'errors' => $validator->errors()
             );
             return response()->json(compact('response'));
+        }
+        $chats = Groupchat::where('group_id','=',$request->group_id)->with('sender')->get();
+        $response = array(
+            'code' => 200,
+            'chats' => $chats
+        );
+        return response()->json(compact('response'));
+    }
+
+    public function get_chat_list(Request $request){
+        //c
+        $counter = 0;
+        $chat_list = FriendList::where([
+            'friend_type' => 'member', // this ensures I won't pick up rows where group id equals user_id
+            'user_id' => Auth::user()->id
+        ])->orWhere([
+            'friend_id' => Auth::user()->id,
+            'friend_type' => 'member'
+        ])->orWhere([
+            'friend_type' => 'group',
+            'user_id' => Auth::user()->id
+        ])->get()->map(function($chat) use($counter){
+            //get last conversation
+            $counter++;
+            if($chat->friend_type === 'group'){
+                $last_conversation = Groupchat::where('id','=',$chat->friend_id)->with('sender','church_group')->get()->sortByDesc('id')->take(1);
+            }else{
+                $last_conversation = Personalchat::where([
+                    'sender_id' => $chat->friend_id,
+                    'receiver_id' => Auth::user()->id
+                ])->orWhere([
+                    'sender_id' => Auth::user()->id,
+                    'receiver_id' => $chat->friend_id
+                ])->with('sender','receiver')->get()->sortByDesc('id')->take(1);
+            }
+            return $last_conversation;
+        })->flatten();
+        return response()->json(compact('chat_list'));
+    }
+
+    public function add_group_members(Request $request){
+        $validator = Validator::make($request->all(),[
+            'member_id' => 'required',
+            'group_id' => 'required'
+        ]);
+
+        if($validator->fails()){
+            $response = array(
+                'code' => 401,
+                'errors' => $validator->errors()
+            );
+            return response()->json(compact('response'));
+        }
+
+        $checkIfGroupExists = ChurchGroup::where('id','=',$request->group_id)->exists();
+        if(!$checkIfGroupExists){
+            $response = array(
+                'code' => 404,
+                'message' => 'Opps! Group not found'
+            );
+            return response()->json(compact('response'));
+        } 
+        $user = User::find($request->member_id);
+        if($user === null){
+            $response = array(
+                'code' => 404,
+                'message' => 'Opps! User record not found.'
+            );
+            return response()->json(compact('response'));
+        }
+        /***
+         * User will be in group if group is for all members i.e member_id is for all 
+         */
+        $userIsInGroup = GroupMember::where([
+            'group_id' => $request->group_id,
+            'member_id' => $request->member_id
+        ])->orWhere([
+            'group_id' => $request->group_id,
+            'member_id' => 'all'
+        ])->first();
+
+        if($userIsInGroup !== null){
+            $response = array(
+                'code' => 401,
+                'message' => 'Opps! User is already in the group'
+            );
+            return response()->json(compact('response'));
+        }
+
+        if(!GroupMember::create($request->all())){
+            $response = array(
+                'code' => 500,
+                'messaege' => 'Error! Member not added to group' 
+            );
+        }
+        $response = array(
+            'code' => 200,
+            'message' => 'Success! Member has been added to group'
+        );
+        return response()->json(compact('response'));
+
+    }
+
+    public function create_church_group(Request $request){
+        $validator = Validator::make($request->all(),[
+            'group_name' => 'required'
+        ]);
+        if($validator->fails()){
+            $response = array(
+                'errors' => $validator->errors(),
+                'code' => 401
+            );
+            return response()->json(compact('response'));
+        }
+        if(!$group = ChurchGroup::create($request->all())){
+            $response = array(
+                'code' => 500,
+                'messaege' => 'Error! Group not created' 
+            );
+        }
+        $response = array(
+            'code' => 200,
+            'message' => 'Success! Group has been created',
+            'group' => $group
+        );
+        return response()->json(compact('response'));
+    }
+
+    public function save_group_chat(Request $request){
+        $validator = Validator::make($request->all(),[
+            'message' => 'required',
+            'group_id' => 'required'
+        ]);
+        if($validator->fails()){
+            $response = array(
+                'code' => 401,
+                'errors' => $validator->errors()
+            );
+            return response()->json(compact('response'));
+        }
+        $friendList = FriendList::where([
+            'friend_id' => $request->group_id,
+            'friend_type' => 'group',
+            'user_id' => Auth::user()->id
+        ])->first();
+        if($friendList === null){
+            $friend['friend_id'] = $request->group_id;
+            $friend['friend_type'] = 'group';
+            $friend['user_id'] = Auth::user()->id;
+            FriendList::create($friend);
         }
         $request['user_id'] = Auth::user()->id;
         if(!Groupchat::create($request->all())){

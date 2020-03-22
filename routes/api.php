@@ -27,7 +27,10 @@ Route::middleware('auth:api')->get('/users/get_personal_chats','UsersController@
 Route::middleware('auth:api')->post('/users/save_personal_chats','UsersController@save_personal_chats');
 Route::middleware('auth:api')->post('/users/save_group_chat','UsersController@save_group_chat');
 Route::middleware('auth:api')->get('/users/get_group_chats','UsersController@get_group_chats');
-
+Route::middleware('auth:api')->get('/users/logout','UsersController@logout');
 Route::middleware('auth:api')->get('/users/get_profile_photo','UsersController@get_profile_photo');
+Route::middleware('auth:api')->get('/users/get_chat_list','UsersController@get_chat_list');
+Route::post('/users/create_church_group','UsersController@create_church_group');
+Route::post('/users/add_group_members','UsersController@add_group_members');
 
 
