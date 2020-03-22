@@ -227,13 +227,11 @@ class UsersController extends Controller
             );
             return response()->json(compact('response'));
         }
-        $messages = Personalchat::where([
-            'sender_id'=> Auth::user()->id,
-            'receiver_id'=> $request->friend_id
-        ])->orWhere([
-            'receiver_id'=> Auth::user()->id,
-            'sender_id'=>$request->friend_id
-        ])->with('receiver','sender')->get();
+        $messages = Personalchat::where(function($query) use($request){
+            $query->where('sender_id','=',Auth::user()->id)->where('receiver_id','=',$request->friend_id);
+        })->orWhere(function($query) use($request){
+            $query->where('receiver_id','=',Auth::user()->id)->where('sender_id','=',$request->friend_id);
+        })->with('receiver','sender')->get();
         $response = array(
             'code' => 200,
             'messages' => $messages
@@ -253,15 +251,12 @@ class UsersController extends Controller
             );
             return response()->json(compact('response'));
         }
-        $friendList = FriendList::where([
-            'friend_id' => $request->receiver_id,
-            'friend_type' => 'member',
-            'user_id' => Auth::user()->id
-        ])->orWhere([
-            'friend_id' => Auth::user()->id,
-            'user_id' => $request->receiver_id,
-            'friend_type' => 'member'
-        ])->first();
+        
+        $friendList = FriendList::where(function($query) use($request){
+            $query->where('friend_id','=',$request->receiver_id)->where('friend_type','=','member')->where('user_id','=',Auth::user()->id);
+        })->orWhere(function($query) use($request){
+            $query->where('friend_id','=',Auth::user()->id)->where('friend_type','=','member')->where('user_id','=',$request->receiver_id);
+        })->first();
         if($friendList === null){
             $friend['friend_id'] = $request->receiver_id;
             $friend['friend_type'] = 'member';
@@ -323,16 +318,13 @@ class UsersController extends Controller
     public function get_chat_list(Request $request){
         //c
         $counter = 0;
-        $chat_list = FriendList::where([
-            'friend_type' => 'member', // this ensures I won't pick up rows where group id equals user_id
-            'user_id' => Auth::user()->id
-        ])->orWhere([
-            'friend_id' => Auth::user()->id,
-            'friend_type' => 'member'
-        ])->orWhere([
-            'friend_type' => 'group',
-            'user_id' => Auth::user()->id
-        ])->get()->map(function($chat) use($counter){
+        $chat_list = FriendList::where(function($query){
+            $query->where('friend_type','=','member')->where('user_id','=',Auth::user()->id); // this ensures I won't pick up rows where group id equals user_id
+        })->orWhere(function($query) use($request){
+            $query->where('friend_id','=',Auth::user()->id)->where('friend_type','=','member');
+        })->orWhere(function($query){
+            $query->where('user_id','=',Auth::user()->id)->where('friend_type','=','group');
+        })->get()->map(function($chat) use($counter){
             //get last conversation
             $counter++;
             if($chat->friend_type === 'group'){
@@ -384,13 +376,12 @@ class UsersController extends Controller
         /***
          * User will be in group if group is for all members i.e member_id is for all 
          */
-        $userIsInGroup = GroupMember::where([
-            'group_id' => $request->group_id,
-            'member_id' => $request->member_id
-        ])->orWhere([
-            'group_id' => $request->group_id,
-            'member_id' => 'all'
-        ])->first();
+        $userIsInGroup = GroupMember::where(function($query) use($request){
+            $query->where('group_id','=',$request->group_id)->where('member_id','=',$request->member_id);
+        })->orWhere(function($query) use($request){
+            $query->where('group_id','=',$request->group_id)->where('member_id','=','all');
+        })->first();
+    
         if($userIsInGroup !== null){
             $response = array(
                 'code' => 401,
