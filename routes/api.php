@@ -32,5 +32,5 @@ Route::middleware('auth:api')->get('/users/get_profile_photo','UsersController@g
 Route::middleware('auth:api')->get('/users/get_chat_list','UsersController@get_chat_list');
 Route::post('/users/create_church_group','UsersController@create_church_group');
 Route::post('/users/add_group_members','UsersController@add_group_members');
-Route::middleware('auth:api')->get('/users/get_avaliable_members','UsersController@get_avaliable_members');
+Route::middleware('auth:api')->get('/users/get_avaliable_members_and_groups','UsersController@get_avaliable_members_and_groups');
 

@@ -291,12 +291,12 @@ class UsersController extends Controller
         return response()->json(compact('response'));
     }
 
-    public function get_avaliable_members(){
+    public function get_avaliable_members_and_groups(){
         $users = User::where('type','=','User')->where('id','!=',Auth::user()->id)->get();
-        $groups = ChurchGroup::all();
+        $group_member = GroupMember::where('member_id','=','all')->orWhere('member_id','=',Auth::user()->id)->with('church_group')->get();
         $response = array(
             'users' => $users,
-            'groups' => $groups
+            'groups' => $group_member
         );
         return response()->json(compact('response'));
     }
@@ -391,7 +391,6 @@ class UsersController extends Controller
             'group_id' => $request->group_id,
             'member_id' => 'all'
         ])->first();
-
         if($userIsInGroup !== null){
             $response = array(
                 'code' => 401,
