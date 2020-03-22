@@ -291,6 +291,16 @@ class UsersController extends Controller
         return response()->json(compact('response'));
     }
 
+    public function get_avaliable_members(){
+        $users = User::where('type','=','User')->where('id','!=',Auth::user()->id)->get();
+        $groups = ChurchGroup::all();
+        $response = array(
+            'users' => $users,
+            'groups' => $groups
+        );
+        return response()->json(compact('response'));
+    }
+
     public function get_group_chats(Request $request){
         $validator = Validator::make($request->all(),[
             'group_id' => 'required'
