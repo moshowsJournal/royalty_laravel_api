@@ -261,8 +261,35 @@ class UsersController extends Controller
         return response()->json(compact('response'));
     }
 
+    public function get_profile_photo(Request $request){
+        $validator = Validator::make($request->all(),[
+            'user_id' => 'required'
+        ]);
+        if($validator->fails()){
+            $response = array(
+                'code' => 'error',
+                'errors' => $validator->errors() 
+            );
+            return response()->json(compact('response'));
+        }
+        $user = User::where('id','=',$request->user_id)->first();
+        if(!$user){
+            $response = array(
+                'code' => 404,
+                'message' => 'User not found'
+            );
+            return response()->json(compact('response'));
+        }
+        $response = array(
+            'code' => 200,
+            'user' => $user,
+            'message' => 'Success! User found.'
+        );
+        return response()->json(compact('response'));
+    }
+
     public function get_group_chats(){
-        $chats = Groupchat::with('sender');
+        $chats = Groupchat::where()with('sender');
         $response = array(
             'code' => 200,
             'chats' => $chats

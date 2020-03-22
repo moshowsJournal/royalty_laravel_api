@@ -28,4 +28,6 @@ Route::middleware('auth:api')->post('/users/save_personal_chats','UsersControlle
 Route::middleware('auth:api')->post('/users/save_group_chat','UsersController@save_group_chat');
 Route::middleware('auth:api')->get('/users/get_group_chats','UsersController@get_group_chats');
 
+Route::middleware('auth:api')->get('/users/get_profile_photo','UsersController@get_profile_photo');
+
 
