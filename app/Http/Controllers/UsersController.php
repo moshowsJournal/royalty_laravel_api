@@ -241,7 +241,7 @@ class UsersController extends Controller
     }
 
     public function get_events(){
-        $events = Events::all();
+        $events = Event::all();
         $response = array(
             'code' => 200,
             'message' => 'Record found',
