@@ -22,31 +22,18 @@ class Controller extends BaseController
         }
     }
 
-    public function uploadImageFile($request,$path){
-        // if($request->hasFile('image_file')){
-        //     //get image file.
-        //     $image = $request->image_file;
-        //     //dd($image);
-        //     //get just extension.
-        //     $ext = $image->getClientOriginalExtension();
-        //     //make a unique name
-        //     $filename = uniqid().'.'.$ext;
-        //     //upload the image
-        //     $public = 'public/'.$path;
-        //     $image->storeAs($public,$filename);
-        //     return env('globalImagePath').$path.$filename;  
-        // }
-        if($request->hasFile('profile_image')){
+    public function uploadFile($request,$path,$field_name = 'profile_image',$folder = 'public/avatars/'){
+        if($request->hasFile($field_name)){
             //get image file.
-            $image = $request->profile_image;
+            $image = $request->$field_name;
             //dd($image);
             //get just extension.
             $ext = $image->getClientOriginalExtension();
             //make a unique name
             $filename = uniqid().'.'.$ext;
             //upload the image
-            $image->storeAs('public/avatars/',$filename);
-            return env('global_link').$path.$filename;   
+            $image->storeAs($folder,$filename);
+            return env('STORAGE_PATH').$path.$filename;   
         }
         return false;
     }

@@ -14,3 +14,7 @@
 Route::get('/', function () {
     return view('welcome');
 });
+Route::get('/add_events','UsersController@add_events');
+Route::post('/add_events','UsersController@add_events');
+Route::get('/add_events/{event_id}','UsersController@add_events');
+Route::post('/add_events/{event_id}','UsersController@add_events');

@@ -13,6 +13,7 @@ use App\GroupMember;
 use App\ChurchGroup;
 use App\Groupchat;
 use App\FriendList;
+use App\Event;
 class UsersController extends Controller
 {
     //
@@ -29,7 +30,7 @@ class UsersController extends Controller
             );
             return response()->json(compact('response'));
         }
-        if($image_link = $this->uploadImageFile($request,'avatars/')){
+        if($image_link = $this->uploadFile($request,'avatars/')){
             $request['profile_photo'] = $image_link;
         }
         $request['api_token'] = $token = Str::random(60);
@@ -237,6 +238,49 @@ class UsersController extends Controller
             'messages' => $messages
         );
         return response()->json(compact('response'));
+    }
+
+    public function get_events(){
+        $events = Events::all();
+        $response = array(
+            'code' => 200,
+            'message' => 'Record found',
+            'data' => $events
+        );
+        return response()->json(compact('response'),200);
+    }
+
+    public function add_events(Request $request,$event_id = null){
+        if($request->isMethod('post')){
+            $validator = Validator::make($request->all(),[
+                'event_photo' => 'mimes:jpeg,jpg,bmp,png',
+                'title'=>'required|max:255',
+                'description' => 'required'
+            ]);
+            if($validator->fails()){
+                return back()->with('error',"Fields marked with '*' are required and must be formatted correctly");
+            }
+            if($file_link = $this->uploadFile($request,'events/',$field_name = 'event_photo',$folder = 'public/events/')){
+                $request['image'] = $file_link;
+            }
+            if($event_id){
+                $event = Event::find(base64_decode($event_id));
+                if(!$event->fill($request->all())->update()){
+                    return back()->with('error','Opps! Something went wrong. Please retry');
+                }
+                return redirect('/add_events')->with('success','Success! Record has been saved');
+            }
+            if(!Event::create($request->all())){
+                return back()->with('error','Opps Something went wrong. Please retry');
+            }
+            return back()->with('success','Success! Record has been saved');
+        }
+        $edit_event = null;
+        if($event_id){
+            $edit_event = Event::find(base64_decode($event_id));
+        }
+        $events = Event::all();
+        return view('users.add_events',compact('events','edit_event'));
     }
 
     public function save_personal_chats(Request $request){
