@@ -61,3 +61,22 @@
   max-width: 530px;
   margin: 0 auto;
 }
+
+div#login-form-container {
+  margin: 5% auto;
+}
+body.login-layout{
+    background-image: url("https://images.unsplash.com/photo-1600288480699-0b0d8a456dd8?ixlib=rb-1.2.1&ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&auto=format&fit=crop&w=1000&q=80");
+    background-color: #211616;
+    background-repeat: no-repeat;
+    background-size: cover;
+    overflow: hidden;
+}
+#demo-card{
+  padding: 60px;
+  background-color: transparent;
+}
+#login-form .form-control {
+  background-color: transparent;
+  color:white;
+}

@@ -21,8 +21,15 @@ class UsersController extends Controller
         $validator = Validator::make($request->all(),[
             'full_name' => 'required',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|confirmed|string|min:6'
+            'password' => 'required|string|min:6'
         ]);
+        if($request->password !== $request->confirm_password){
+            $response = array(
+                'code' => 400,
+                'message' => 'Password do not match'
+            );
+            return response()->json(compact('response'),400);
+        }
         if($validator->fails()){
             $response = array(
                 'errors' => $validator->errors(),
@@ -71,7 +78,7 @@ class UsersController extends Controller
             return response()->json(compact('response'));
         }
         $user = User::where('email','=',$request->email)->first();
-        if($user && $user->verified === 0){
+        if($user && $user->verified === 0 && $user->type !== 'Admin'){
             $data['full_name'] = $user['full_name'];
             $data['email_address'] = $user['email'];
             $data['verification_code'] = $user->verification_code = rand(100000, 999999);
@@ -90,17 +97,17 @@ class UsersController extends Controller
                 'message' => 'Invalid login details',
                 'code' => 401
             );
-            return response()->json(compact('response'));
+            return response()->json(compact('response'),401);
         }
         $user = User::find(Auth::user()->id);
         $user->is_online = 1;
         $user->api_token = $token = Str::random(60);
-        $user->save(); 
+        $user->save();
         $response = array(
             'code' => 200,
             'user' => $user
         );
-        return response()->json(compact('response'));
+        return response()->json(compact('response'),200);
     }
 
     public function logout(){
@@ -240,48 +247,7 @@ class UsersController extends Controller
         return response()->json(compact('response'));
     }
 
-    public function get_events(){
-        $events = Event::all();
-        $response = array(
-            'code' => 200,
-            'message' => 'Record found',
-            'data' => $events
-        );
-        return response()->json(compact('response'),200);
-    }
-
-    public function add_events(Request $request,$event_id = null){
-        if($request->isMethod('post')){
-            $validator = Validator::make($request->all(),[
-                'event_photo' => 'mimes:jpeg,jpg,bmp,png',
-                'title'=>'required|max:255',
-                'description' => 'required'
-            ]);
-            if($validator->fails()){
-                return back()->with('error',"Fields marked with '*' are required and must be formatted correctly");
-            }
-            if($file_link = $this->uploadFile($request,'events/',$field_name = 'event_photo',$folder = 'public/events/')){
-                $request['image'] = $file_link;
-            }
-            if($event_id){
-                $event = Event::find(base64_decode($event_id));
-                if(!$event->fill($request->all())->update()){
-                    return back()->with('error','Opps! Something went wrong. Please retry');
-                }
-                return redirect('/add_events')->with('success','Success! Record has been saved');
-            }
-            if(!Event::create($request->all())){
-                return back()->with('error','Opps Something went wrong. Please retry');
-            }
-            return back()->with('success','Success! Record has been saved');
-        }
-        $edit_event = null;
-        if($event_id){
-            $edit_event = Event::find(base64_decode($event_id));
-        }
-        $events = Event::all();
-        return view('users.add_events',compact('events','edit_event'));
-    }
+    
 
     public function save_personal_chats(Request $request){
         $validator = Validator::make($request->all(),[

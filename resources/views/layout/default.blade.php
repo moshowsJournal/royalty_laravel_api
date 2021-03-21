@@ -52,13 +52,13 @@
       </div>
       <div class="sidebar-wrapper" id="sidebar-wrapper">
         <ul class="nav">
-          <!-- <li>
-            <a href="./dashboard.html">
+        <li class="{{Request::is('jobs') ? 'active': ''}}">
+            <a href="/jobs">
               <i class="now-ui-icons design_app"></i>
-              <p>Dashboard</p>
+              <p>Jobs</p>
             </a>
           </li>
-          <li>
+          <!-- <li>
             <a href="./icons.html">
               <i class="now-ui-icons education_atom"></i>
               <p>Icons</p>
@@ -76,7 +76,7 @@
               <p>Notifications</p>
             </a>
           </li> -->
-          <li class="active ">
+          <li class="{{Request::is('add_events') ? 'active': ''}}">
             <a href="/add_events">
               <i class="now-ui-icons objects_globe"></i>
               <p>Events</p>
@@ -134,15 +134,15 @@
               </div>
             </form>
             <ul class="navbar-nav">
-              <li class="nav-item">
+              <!-- <li class="nav-item">
                 <a class="nav-link" href="#pablo">
                   <i class="now-ui-icons media-2_sound-wave"></i>
                   <p>
                     <span class="d-lg-none d-md-block">Stats</span>
                   </p>
                 </a>
-              </li>
-              <li class="nav-item dropdown">
+              </li> -->
+              <!-- <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                   <i class="now-ui-icons location_world"></i>
                   <p>
@@ -154,12 +154,12 @@
                   <a class="dropdown-item" href="#">Another action</a>
                   <a class="dropdown-item" href="#">Something else here</a>
                 </div>
-              </li>
+              </li> -->
               <li class="nav-item">
-                <a class="nav-link" href="#pablo">
+                <a class="nav-link" href="/logout">
                   <i class="now-ui-icons users_single-02"></i>
                   <p>
-                    <span class="d-lg-none d-md-block">Account</span>
+                    <span class="d-lg-none d-md-block">Logout</span>
                   </p>
                 </a>
               </li>
@@ -178,7 +178,7 @@
           <nav>
             <ul>
               <li>
-                <a href="https://www.creative-tim.com">
+                <a href="#">
                   All Rights Reserved By ROYALTY
                 </a>
               </li>
